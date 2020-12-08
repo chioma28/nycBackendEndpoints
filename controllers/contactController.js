@@ -30,7 +30,7 @@ let contactController = (app)=>{
                         if(err){
                             console.log(err)
                         }else{
-                            res.send("Your Message was sent succesfully")
+                            res.send("Your Message has been sent succesfully")
                         }
                
             })
