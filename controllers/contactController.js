@@ -17,7 +17,28 @@ let contactController = (app)=>{
 
             })
 
-        });
+        })
+        .post((req, res)=>{
+            connection.query(`insert into contact (id,fullName,email,title,message) 
+            values ('${req.body.id}',
+                    '${req.body.fullName}',
+                     '${req.body.email}', 
+                    '${req.body.title}', 
+                    '${req.body.message}')`,
+                    
+                    (err, response)=>{
+                        if(err){
+                            console.log(err)
+                        }else{
+                            res.send("Your Message was sent succesfully")
+                        }
+               
+            })
+
+
+
+        })
+
         app.route('/contact/:id')
         .get((req, res)=>{
 
@@ -31,28 +52,6 @@ let contactController = (app)=>{
             })
 
         })
-
-        .post((req, res)=>{
-            connection.query(`insert into contact (id,fullName,email,title,message) 
-            values ('${req.body.id}',
-                    '${req.body.fullName}',
-                     '${req.body.email}', 
-                    '${req.body.title}', 
-                    '${req.body.message}')`,
-                    
-                    (err, response)=>{
-                        if(err){
-                            console.log(err)
-                        }else{
-                            res.send(response)
-                        }
-               
-            })
-
-
-
-        })
-
 
 
 
