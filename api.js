@@ -6,6 +6,7 @@ var category = require('./controllers/categoryController')
 var login = require('./controllers/loginController')
 var company = require('./controllers/companyController')
 var contact = require('./controllers/contactController')
+var package = require('./controllers/packageController')
 // const { json } = require('body-parser')
 const mysql = require('mysql')
 
@@ -20,6 +21,7 @@ app.use(bodyParser.json())
 // category(app)
 // login(app)
 // company(app)
+// package(app)
 contact(app)
 
 
