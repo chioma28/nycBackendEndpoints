@@ -1,0 +1,33 @@
+{
+  "name": "tiidelabapp",
+  "version": "1.0.0",
+  "description": "It is for beginners learning node js",
+  "main": "intro.js",
+  "scripts": {
+    "test": "tiidetest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "repo-info"
+  },
+  "keywords": [
+    "beginners"
+  ],
+  "author": "Chioma Okeke",
+  "license": "MIT",
+  "dependencies": {
+    "@hapi/joi": "^17.1.1",
+    "bcrypt": "^5.0.0",
+    "body-parser": "^1.19.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "formidable": "^1.2.2",
+    "joi": "^17.3.0",
+    "jsonwebtoken": "^8.5.1",
+    "multer": "^1.4.2",
+    "mysql": "^2.18.1",
+    "nodemailer": "^6.4.15",
+    "router": "^1.3.5",
+    "sql": "^0.78.0"
+  }
+}
