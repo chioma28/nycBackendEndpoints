@@ -26,18 +26,7 @@ app.get('/', (req, res) => {
     res.send("Welcome to yellow page")
 })
 
-app.use((req, res, next) => {
-    const error = new Error('Could not find this route');
-    throw error;
-})
 
-app.use((error, req, res, next) => {
-    if (res.headerSent) {
-        return next(error);
-    }
-    res.status(error.code || 500)
-    res.json({message: error.message || 'An unknown error occurred!'});
-})
 
 app.get('/', (req, res) => {
     res.send("Welcome to yellow page")
@@ -54,7 +43,18 @@ payment(app);
 advert(app);
 // upload(app);
 
+app.use((req, res, next) => {
+    const error = new Error('Could not find this route');
+    throw error;
+})
 
+app.use((error, req, res, next) => {
+    if (res.headerSent) {
+        return next(error);
+    }
+    res.status(error.code || 500)
+    res.json({message: error.message || 'An unknown error occurred!'});
+})
 /**************************************** Assign port *************************************************/
 
 app.listen(PORT);
