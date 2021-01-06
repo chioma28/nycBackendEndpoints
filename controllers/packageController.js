@@ -1,6 +1,6 @@
 const { response } = require('express');
 var packageController = (app)=>{
-    let connection = require ('../models/db');
+    let connection = require ('../models/db.config');
     const auth = require('./authController');
     const auditManager = require('./trailController')
 

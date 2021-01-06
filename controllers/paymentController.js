@@ -1,6 +1,6 @@
 var paymentController = (app) =>{
 //Import required dependencies
-var connection = require('../models/db');
+var connection = require('../models/db.config');
 const auth = require('./authController');
 const jwt = require('jsonwebtoken');
 

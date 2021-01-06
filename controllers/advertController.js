@@ -1,5 +1,5 @@
 let advertController = (app)=>{
-    var connection = require('../models/db');
+    var connection = require('../models/db.config');
     const jwt = require('jsonwebtoken');
     const auth = require('../controllers/authController');
     const path = require('path');

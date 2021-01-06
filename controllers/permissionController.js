@@ -1,6 +1,6 @@
 const permissionController = (app) => {
 //importing all the necessary dependencies and modules    
-var connection = require('../models/db');
+var connection = require('../models/db.config');
 const auth = require('./authController');  
 const jwt = require('jsonwebtoken');
 

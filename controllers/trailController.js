@@ -1,4 +1,4 @@
- connection = require('../models/db');
+ connection = require('../models/db.config');
 
 
 const auditTrail = () => {

@@ -1,7 +1,7 @@
 var userController = (app) =>{
     //import all the required dependencies
 
-    var connection = require('../models/db');
+    var connection = require('../models/db.config');
     const bcrypt = require('bcrypt');
     const formidable = require('formidable');
     const multer  =require('multer');
@@ -128,13 +128,14 @@ var userController = (app) =>{
                 if (errh) {
                     res.status(402).send(err);
                 }
-                //const otpCode = randomstring.generate(); 
+                const otpCode = randomstring.generate(); 
                                  
-                    connection.query(`insert into users (roleId,businessName,email,password) 
+                    connection.query(`insert into users (roleId,businessName,email,password,otp) 
                     values ('2',
                         '${req.body.businessName}',
                         '${req.body.email}',
-                        '${hash}')`,(err,resp)=>{
+                        '${hash}',
+                        '${otpCode}')`,(err,resp)=>{
                             if(err)
                             {
                                 res.status(400).send(err);

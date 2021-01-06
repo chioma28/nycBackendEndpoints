@@ -1,7 +1,7 @@
 const { response } = require('express')
 
 var categoryController = (app) =>{
-var connection = require ('../models/db');
+var connection = require ('../models/db.config');
 const jwt = require('jsonwebtoken');
 const auth = require('../controllers/authController');
 const auditManager = ('./trailController.js');

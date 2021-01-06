@@ -1,5 +1,5 @@
 var companyController = (app) =>{
-var connection = require('../models/db');
+var connection = require('../models/db.config');
 
 
 /**************************** Get Request *********************************/

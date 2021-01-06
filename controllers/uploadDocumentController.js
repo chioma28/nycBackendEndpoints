@@ -4,9 +4,9 @@
 
 
 var uploadDocumentController = (app)=>{
-    const { connect } = require('../models/db');
+    const { connect } = require('../models/db.config');
     const { response } = require('express');
-    const connection = require('../models/db');
+    const connection = require('../models/db.config');
     const auth = require('./authController');
     const fileUpload = require('../middleware/fileupload');
 
