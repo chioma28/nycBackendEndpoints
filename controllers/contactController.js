@@ -1,6 +1,8 @@
 const { response } = require('express');
 const sendMail = require('../middleware/mail');
 const { connect } = require('../models/db');
+const auth = require('./authController');
+const auditManager = require('./trailController');
 /* ******************************* Contact controller ********************** */
 let contactController = (app)=>{
     var connection = require('../models/db');
@@ -8,16 +10,31 @@ let contactController = (app)=>{
 /* ******************************* Contact router ********************** */
     app.route('/contact')
 /******** GET ROUTE ********/
-        .get((req, res)=>{
-
+        .get(auth.authenticate,(req, res)=>{
+            if(req.data.data.roleId == 1){
             connection.query(`select * from contact`, (err, response)=>{
                 if (err){
-                    console.log(err)
+                    res.send(err);
+                    trail={
+                        moduleId: "3",
+                        actor: `${req.data.data.email}`,
+                        action: `${req.data.data.email} unauthorized to view all the info in contacts `,
+                        status: "danger"
+                    }
+                    auditManager.logTrail(trail);
                 } else{
-                    res.send(response)
+                    res.send(response);
+                    trail={
+                        moduleId: "3",
+                        actor: `${req.data.data.email}`,
+                        action: `${req.data.data.email} viewed all the info in contacts `,
+                        status: "success"
+                    }
+                    auditManager.logTrail(trail);
                 }
 
             })
+        }
 
         })
         /******** POST ROUTE ********/
@@ -32,8 +49,23 @@ let contactController = (app)=>{
 
                         if(err){
                             res.status(500).json({ message: 'Internal Error' });
+                            res.status({ message: 'Email sent!!!' });
+                            trail={
+                                moduleId: "3",
+                                actor: ` anonymous ${req.body.email}`,
+                                action: `${req.body.email} tried to send a message  `,
+                                status: "failed"
+                            }
+                            auditManager.logTrail(trail);
                         } else{
                             res.status({ message: 'Email sent!!!' });
+                            trail={
+                                moduleId: "3",
+                                actor: ` anonymous ${req.body.email}`,
+                                action: `${req.body.email} sent a message  `,
+                                status: "success"
+                            }
+                            auditManager.logTrail(trail);
                         }
 
                     })
@@ -59,37 +91,5 @@ let contactController = (app)=>{
 
 
         // })
-/******** CONTACT WITH ID ROUTE ********/
-        app.route('/contact/:id')
-        /******** GET WITH ID ROUTE ********/
-        .get((req, res)=>{
-
-            connection.query(`select * from contact where id= ${req.params.id}`, (err, response)=>{
-                if(err){
-                    console.log(err)
-                } else{
-                    res.send(response)
-                }
-
-            })
-
-        })
-        /******** DELETE WITH ID ROUTE ********/
-        .delete((req, res)=>{
-                connection.query(`ALTER TABLE contact DROP message`, (err, response)=>{
-                        if(err){
-                            res.send(err)
-                        } else{
-                      
-                        res.send("message succesfully deleted")
-                        }
-
-                })
-
-        })
-      
-
-
-
 }
 module.exports = contactController

@@ -1,14 +1,19 @@
 var userController = (app) =>{
     //import all the required dependencies
 
-    var connection = require('../models/db')
-    const bcrypt = require('bcrypt')
-    const formidable = require('formidable')
-    const multer  =require('multer')
-    const jwt = require('jsonwebtoken')
-    const joi = require('@hapi/joi')
-    const auth = require('../controllers/authController')
-    require('dotenv').config()
+    var connection = require('../models/db');
+    const bcrypt = require('bcrypt');
+    const formidable = require('formidable');
+    const multer  =require('multer');
+    const jwt = require('jsonwebtoken');
+    const joi = require('joi');
+    const path = require('path');
+    const auth = require('./authController');
+    const randomstring = require('randomstring');
+    const sendEmail = require('../middleware/mail');
+    const auditManager = require('./trailController');
+    const { check, validationResult } = require('express-validator');//validator
+    require('dotenv').config();
 
     //instantiating the .env file
     process.env.ACCESS_TOKEN_SECRET
@@ -21,18 +26,31 @@ var userController = (app) =>{
          
         if(req.data.data.roleId == 1){
             connection.query(`select * from users order by id`,(err,resp)=>{
-                res.status(200).send(resp)
-                console.log(resp)
+                res.status(200).send(resp);
+                trail={
+                    moduleId: "11",
+                    actor: "anonymous",
+                    action: `anonymous user with email ${req.body.email} attempted viewing users but failed`,
+                    status: "danger"
+                }
+                auditManager.logTrail(trail);
             })
         }
         else{
-            res.send('You have not been authorized to perform this function').status(403)
+            res.send('You have not been authorized to perform this function').status(403);
+            trail={
+                moduleId: "11",
+                actor: `${req.body.email}`,
+                action: ` ${req.body.email} viewed users successfully`,
+                status: "success"
+            }
+            auditManager.logTrail(trail);
         }
         
     })
 
     //getting the details of any user by id
-    app.get('/admin/:1',auth.authenticate,(req,res)=>{
+    app.get('/admin/:id',auth.authenticate,(req,res)=>{
         // checking if you are an admin to get access to view all records
          
         if(req.data.data.roleId == 1){
@@ -54,50 +72,95 @@ var userController = (app) =>{
         {
             connection.query(`select * from users where id = '${req.params.id}'`,(err,resp)=>{
                 if (err) throw err
-                res.send(resp)
+                res.send(resp);
+                trail={
+                    moduleId: "11",
+                    actor: `${req.body.email}`,
+                    action: `${req.body.email}successfully viewed a user profile `,
+                    status: "success"
+                }
+                auditManager.logTrail(trail);
             })
         }
-        else return res.status(403).send('You cannot view this profile')
+        else return res.status(403).send('You cannot view this profile');
+        trail={
+            moduleId: "11",
+            actor: "anonymous",
+            action: `anonymous user with email ${req.body.email} attempted viewing a user profile but failed`,
+            status: "danger"
+        }
+        auditManager.logTrail(trail);
         
     })
       
     /******************************** Post Request **************************************/
     //adding records into the table
-    app.post('/signup',(req,res)=>{
-        bcrypt.hash(req.body.password,10,(errh,hash)=>{
-            if (errh) throw err
-            
-            // const schema = joi.object({
-            //     businessName: joi.string().alphanum().min(6).max(60).required(),
-            //     password : joi.string().min(8).max(20).required(),
-            //     email : joi.string().email().lowercase().required()
-            //  });
-            //  joi.valid(req.body,schema,(err,joiResult)=>{
-            //      if (err) return res.send(err)
-            //      console.log(joiResult)
-
-            //    if(joiResult){
-                connection.query(`insert into users (roleId,businessName,email,password) 
-                values ('${req.body.roleId}',
-                    '${req.body.businessName}',
-                    '${req.body.email}',
-                    '${hash}')`,(err,resp)=>{
-                        if(err)
-                        {
-                            res.status(400).send(err)
-                        }
-                        res.send(`User ${req.body.businessName} has been successfully registered`)
-                    })
-               
-               
+    app.post('/signup',[ 
+        ///validation
+        check('email', 'invalid email') 
+                        .isEmail(), 
+        check('businessName', 'Name length should not be less than 5 characters') 
+                        .isLength({ min: 6}), 
+        check('password', 'Password length should not be less than 8 characters') 
+        .isLength({ min : 8 })
+      ], (req, res) => { 
+      
+         // validationResult function checks whether 
+        // an error occurs or not and returns an object 
+        const errors = validationResult(req); 
+      
+        // If some error occurs, then this 
+        // block of code will run 
+        if (!errors.isEmpty()) { 
+            res.json(errors) 
+        } 
+        // If no error occurs, then 
+        
+        //check if email exists,
+      connection.query(`select email from users where email = '${req.body.email}'`,(err,response)=>{
+        if(response.length > 0 ){
+               res.send('This email already exists!');
+               }
+      else{
+        
+        
+            bcrypt.hash(req.body.password,10,(errh,hash)=>{
+                if (errh) {
+                    res.status(402).send(err);
+                }
+                //const otpCode = randomstring.generate(); 
+                                 
+                    connection.query(`insert into users (roleId,businessName,email,password) 
+                    values ('2',
+                        '${req.body.businessName}',
+                        '${req.body.email}',
+                        '${hash}')`,(err,resp)=>{
+                            if(err)
+                            {
+                                res.status(400).send(err);
+                            }
+                            res.send(`User ${req.body.businessName} has been successfully registered`);
+                            trail={
+                                moduleId: "11",
+                                actor: `${req.body.email}`,
+                                action: `${req.body.email} has been successfully registered `,
+                                status: "success"
+                            }
+                            auditManager.logTrail(trail);
+                        })  
                     
-                    
-
-             })
-
+    
+                
             
+    
+            }) 
+        } 
+        
+       
+    })
         })
-    // })
+    
+
 
           /******************************** Put Request **************************************/
           //user updating records after logging in the table
@@ -111,8 +174,25 @@ var userController = (app) =>{
                  state ='${req.body.state}',
                  city ='${req.body.city}',
                  userCategory ='${req.body.userCategory}' where id = ${req.params.id}`,(err,resp)=>{
-                    if (err) throw err
-                    res.send(`The details of user with id ${req.params.id} has been modified`)
+                    if (err) {
+                        res.status(400).send(err);
+                    trail={
+                        moduleId: "11",
+                        actor: `${req.body.email}`,
+                        action: `${req.body.email} profile update failed `,
+                        status: "failed"
+                    }
+                    auditManager.logTrail(trail);
+                }
+                    
+                    res.send(`The details of user with id ${req.params.id} has been modified`);
+                    trail={
+                        moduleId: "11",
+                        actor: `${req.body.email}`,
+                        action: `${req.body.email} profile update successful `,
+                        status: "success"
+                    }
+                    auditManager.logTrail(trail);
                 })
             }
            
@@ -126,10 +206,24 @@ var userController = (app) =>{
             connection.query(`delete from users where id = ${req.params.id}`,(err,resp)=>{
                 
                 res.status(200).send(`User with the ID ${req.params.id} has been deleted `);
+                trail={
+                    moduleId: "11",
+                    actor: `${req.body.email}`,
+                    action: `${req.body.email}successfully deleted a user profile `,
+                    status: "success"
+                }
+                auditManager.logTrail(trail);
             })
             }
             else{
                     res.sendStatus(404).send('Access denied!');
+                    trail={
+                        moduleId: "11",
+                        actor: 'anonymous',
+                        action: `anonymous with email ${req.body.email} failed to deleted a user profile `,
+                        status: "danger"
+                    }
+                    auditManager.logTrail(trail);
             }
             
         })
@@ -140,6 +234,13 @@ app.post('/login',(req,res)=>{
         if (err || resp.length < 1) {
             res.statusCode=401;
             res.send("Invalid email or password");
+            trail={
+                moduleId: "11",
+                actor: "anonymous",
+                action: `anonymous user with email '${req.body.email} attempted logging in but failed`,
+                status: "danger"
+            }
+            auditManager.logTrail(trail);
         }
         else{
             
@@ -149,7 +250,14 @@ app.post('/login',(req,res)=>{
                  
                  if (result === false) {
                      res.statusCode = 401;
-                     res.send('Invalid username and password');
+                     res.send('Invalid email or password');
+                     trail={
+                        moduleId: "11",
+                        actor: "anonymous",
+                        action: `anonymous user with email ${req.body.email} attempted logging in but failed`,
+                        status: "danger"
+                    }
+                    auditManager.logTrail(trail);
                  }
                  if(result === true){
 
@@ -170,6 +278,13 @@ app.post('/login',(req,res)=>{
                            "Token":accessToken
                        }
                        res.send(tokenData)
+                       trail={
+                        moduleId: "11",
+                        actor: `${req.body.email}`,
+                        action: `${req.body.email} successfully logged in`,
+                        status: "success"
+                    }
+                    auditManager.logTrail(trail);
                     })
                    
 
@@ -184,6 +299,92 @@ app.post('/login',(req,res)=>{
     })
 })
 
+/******************************************* Upload Profile Picture ******************************************/
+const storage = multer.diskStorage({
+    destination: (req,file,cb)=>{
+        cb(null,"uploads");
+    },
+    filename:(req,file,cb)=>{
+        cb(null,Date.now() + path.extname(file.originalname));
+    },
+});
+
+const fileFilter = (req,file,cb) =>{
+    if(file.mimetype == "image/jpeg" || file.mimetype == "image/png" || file.mimetype == "image/jpg"){
+        cb(null,true);
+    }
+    else{
+        cb(null,false);
+    }
+}
+const upload = multer({storage: storage, fileFilter: fileFilter});
+   
+
+//Route for uploading
+
+app.put('/users/profile/picture/:id',auth.authenticate,upload.single("image"),(req, res,next)=>{
+    if(!req.file) { 
+        res.status(406).send("Please upload an image ");
+        trail={
+            moduleId: "11",
+            actor: `${req.body.email}`,
+            action: `${req.body.email} profile picture upload failed `,
+            status: "failed"
+        }
+        auditManager.logTrail(trail);
+    }
+    else{
+      var imgSrc = 'http://localhost:8600/uploads/' + req.file.filename
+      var insertImg = `update users set displayPicture = ?  where id = '${req.params.id}'`
+      connection.query(insertImg,[imgSrc],(err,result)=>{
+          if (err) throw err
+          res.send('Image successfully uploaded');
+          trail={
+            moduleId: "11",
+            actor: `${req.body.email}`,
+            action: `${req.body.email}successfully uploaded profile picture `,
+            status: "success"
+        }
+        auditManager.logTrail(trail);
+      })
+    }
+   
+})
+
+/******************************************* View Profile Picture *****************************************/
+app.get('/users/profile/picture/:id',auth.authenticate,(req,res)=>{
+    connection.query(`select displayPicture from users where id = '${req.params.id}'`,(err,resp)=>{
+        if (err) return err
+
+        res.send(resp);
+    })
+})
+   /******************************************* Delete Profile Picture *****************************************/
+   app.delete('/users/profile/picture/:id',auth.authenticate,(req,res)=>{
+    connection.query(`update users set displayPicture = '' where id = '${req.params.id}'`,(err,resp)=>{
+        if (err) {
+            res.status(400).send(err);
+            trail={
+                moduleId: "11",
+                actor: `${req.body.email}`,
+                action: `${req.body.email} failed to delete profile picture`,
+                status: "failed"
+            }
+            auditManager.logTrail(trail);
+        }
+        res.send('Image successfully deleted');
+        trail={
+            moduleId: "11",
+            actor: `${req.body.email}`,
+            action: `${req.body.email}successfully deleted profile picture `,
+            status: "success"
+        }
+        auditManager.logTrail(trail);
+    })
+})
+
+
+
 /****************************************** Forgot password *************************************************/
    app.post('/forgotPassword',(req,res)=>{
     connection.query(`select * from users where email = '${req.body.email}'`,(err,resp)=>{
@@ -194,21 +395,12 @@ app.post('/login',(req,res)=>{
         }
         
         else{
-            // if(resp === false){
-            //     res.status(401).send('Email does not exist');
-            // }
-            // if(resp === true){
-                // encapsulating the password
                 delete resp[0].password
                 if(req.body.email == resp[0].email){
                     let data = {"data" : resp[0]}
                     let forgotToken = jwt.sign(data,process.env.FORGOT_TOKEN_SECRET)
                     res.send(forgotToken)
                 }
-                 //token login
-           
-            // }
-             
 
            
         }
@@ -234,6 +426,10 @@ app.post('/login',(req,res)=>{
         })
     })
 })
+
+
+
+
 
 }
 module.exports = userController
