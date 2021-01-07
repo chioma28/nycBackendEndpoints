@@ -1,7 +1,7 @@
 const pool = require('../models/db.config');
 
 var faqController = (app) => {
-    var connection = require('../models/db.config');
+    var pool = require('../models/db.config');
     const auth = require('./authController');  
     const jwt = require('jsonwebtoken');
     const auditManager = require('./trailController');
