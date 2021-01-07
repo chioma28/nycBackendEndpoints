@@ -14,7 +14,7 @@ var advert = require('./controllers/advertController');
 const PORT = process.env.PORT || 8600
 
 var corsOption = {
-    origin : ["https://naijayellowcatalogue.netlify.app", "https://warm-journey-85178.herokuapp.com",
+    origin : ["https://naijayellowcatalogue.netlify.app", "https://warm-journey-85178.herokuapp.com/",
     "http://localhost:8600"],
     methods: "GET,POST,PUT,DELETE,OPTIONS",
     optionSuccessStatus: 200
