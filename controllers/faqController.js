@@ -1,3 +1,5 @@
+const pool = require('../models/db.config');
+
 var faqController = (app) => {
     var connection = require('../models/db.config');
     const auth = require('./authController');  
@@ -7,7 +9,7 @@ var faqController = (app) => {
    
     /**************************** Getting The FAQ'S (GET Request)********************************/
     app.get('/faq',(req,res)=>{
-        connection.query(`select * from faq`,(err,resp)=>{
+        pool.query(`select * from faq`,(err,resp)=>{
             if (err) return res.status(500).send(err);
             res.status(200).send(resp);
         })
