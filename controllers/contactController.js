@@ -1,11 +1,11 @@
 const { response } = require('express');
 const sendMail = require('../middleware/mail');
-const { connect } = require('../models/db.config');
+//const { connect } = require('../models/db.config');
 const auth = require('./authController');
 const auditManager = require('./trailController');
 /* ******************************* Contact controller ********************** */
 let contactController = (app)=>{
-    var connection = require('../models/db');
+    var connection = require('../models/db.config');
 
 /* ******************************* Contact router ********************** */
     app.route('/contact')

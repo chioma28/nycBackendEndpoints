@@ -5,7 +5,7 @@
   "main": "intro.js",
   "scripts": {
     "start": "node api.js",
-    "dev" : "nodemon api"
+    "dev": "nodemon api"
   },
   "repository": {
     "type": "git",
@@ -38,7 +38,6 @@
     "sql": "^0.78.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.6"
+    "nodemon": "^2.0.7"
   }
-
 }

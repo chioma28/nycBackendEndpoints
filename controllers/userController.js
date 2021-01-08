@@ -97,9 +97,9 @@ var userController = (app) =>{
     //adding records into the table
     app.post('/signup',[ 
         ///validation
-        check('email', 'invalid email') 
+        check('email', 'invalid email,please put in a valid email') 
                         .isEmail(), 
-        check('businessName', 'Name length should not be less than 5 characters') 
+        check('businessName', 'Business name length should not be less than 5 characters') 
                         .isLength({ min: 6}), 
         check('password', 'Password length should not be less than 8 characters') 
         .isLength({ min : 8 })
@@ -128,14 +128,13 @@ var userController = (app) =>{
                 if (errh) {
                     res.status(402).send(err);
                 }
-                const otpCode = randomstring.generate(); 
+               // const otpCode = randomstring.generate(); 
                                  
-                    connection.query(`insert into users (roleId,businessName,email,password,otp) 
+                    connection.query(`insert into users (roleId,businessName,email,password) 
                     values ('2',
                         '${req.body.businessName}',
                         '${req.body.email}',
-                        '${hash}',
-                        '${otpCode}')`,(err,resp)=>{
+                        '${hash}')`,(err,resp)=>{
                             if(err)
                             {
                                 res.status(400).send(err);
